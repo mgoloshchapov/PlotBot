@@ -1,11 +1,10 @@
 #  A temporary bot for testing purposes
 
-from _token import token
+from config import token
 import telebot
 from K_ecxel_array import *
 
 bot = telebot.TeleBot(token)
-url_expected = False
 
 
 @bot.message_handler(commands=['start'])

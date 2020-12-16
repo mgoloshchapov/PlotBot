@@ -1,0 +1,14 @@
+{
+  user: "default",
+  text: {
+    title: "",
+    x_axis_name: "",
+    y_axis_name: "",
+    line_label: "",
+    dot_label: "",
+  },
+  visual: {
+    dot_color: "black",
+    line_color: "black",
+  },
+}

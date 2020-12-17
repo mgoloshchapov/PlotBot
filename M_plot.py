@@ -1,8 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-TOKEN = '1413803675:AAFLUeKKJ1Y59N43-7ZDlbRLd4dqtlHbojg'
-
 
 def plot(x, y,
          dot_color='black',
@@ -30,3 +28,5 @@ def plot(x, y,
         plt.legend()
 
     plt.savefig('plot.png')
+    plt.show()
+

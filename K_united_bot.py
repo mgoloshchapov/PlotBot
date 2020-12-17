@@ -75,24 +75,40 @@ def set_command(message, setting=None):
         modify_user_data(message.chat.id, message.text, 'visual', setting)
 
 
-
-
 # function that asks for axis names, and sends plot to user
-def bot_plot(message, x, y, x_label=None, y_label=None, init=False):
+def bot_plot(message, x, y, x_label=None, x_tick=None, y_label=None, y_tick=None, title=None, init=False):
     data = read_user_data(message.chat.id)
 
     if init:
         bot.send_message(message.chat.id, "Come up with a name for the x axis:")
         bot.register_next_step_handler(message, bot_plot, x, y)
+
     elif isinstance(x_label, type(None)):
         x_label = message.text
-        bot.send_message(message.chat.id, "Come up with a name for the y axis:")
+        bot.send_message(message.chat.id, "Come up with a tick for the x axis")
         bot.register_next_step_handler(message, bot_plot, x, y, x_label)
-    else:
+
+    elif isinstance(x_tick, type(None)):
+        x_tick = float(message.text)
+        bot.send_message(message.chat.id, "Come up with a name for the y axis:")
+        bot.register_next_step_handler(message, bot_plot, x, y, x_label, x_tick)
+
+    elif isinstance(y_label, type(None)):
         y_label = message.text
-        plot(x, y, x_axis_name=x_label, y_axis_name=y_label, **data['visual'])
+        bot.send_message(message.chat.id, "Come up with a tick for the y axis")
+        bot.register_next_step_handler(message, bot_plot, x, y, x_label, x_tick, y_label)
+
+    elif isinstance(y_tick, type(None)):
+        y_tick = float(message.text)
+        bot.send_message(message.chat.id, "Come up with a plot title")
+        bot.register_next_step_handler(message, bot_plot, x, y, x_label, x_tick, y_label, y_tick)
+
+    else:
+        title = message.text
+        plot(x, y, x_label, x_tick, y_label, y_tick, title, **data['visual'])
         photo = open('plot.png', 'rb')
         bot.send_photo(message.chat.id, photo)
+
 
 
 # function that reads excel file

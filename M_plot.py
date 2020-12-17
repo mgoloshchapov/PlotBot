@@ -3,17 +3,25 @@ import numpy as np
 
 
 def plot(x, y,
+         x_label,
+         x_tick,
+         y_label,
+         y_tick,
+         title,
          dot_color='black',
          line_color='black',
-         title='',
-         x_axis_name='',
-         y_axis_name='',
          line_label='',
-         dot_label=''):
+         dot_label='',
+         ):
 
     plt.title(title)
-    plt.xlabel(x_axis_name)
-    plt.ylabel(y_axis_name)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
+
+    plt.xticks([min(x) + i*x_tick for i in range(round((max(x)-min(x))/x_tick)+1)])
+    plt.yticks([min(y) + i * y_tick for i in range(round((max(y) - min(y)) / y_tick) + 1)])
+    plt.grid()
 
     plt.plot(x, y, color=line_color, label=line_label)  # line
 
@@ -28,5 +36,4 @@ def plot(x, y,
         plt.legend()
 
     plt.savefig('plot.png')
-    plt.show()
-
+    plt.clf()

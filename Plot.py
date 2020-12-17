@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+
+
 TOKEN = '1413803675:AAFLUeKKJ1Y59N43-7ZDlbRLd4dqtlHbojg'
 
 
@@ -23,10 +25,13 @@ def plot(x, y,
 
     A = np.vstack([x, np.ones(len(x))]).T  # least square
     m, c = np.linalg.lstsq(A, y, rcond=None)[0]
-
-    plt.plot(x, m*x + c)
+    y1=[m*i +c for i in x]
+    plt.plot(x, y1)
 
     if line_label != '' or dot_label != '':
         plt.legend()
-
     plt.savefig('plot.png')
+
+
+
+plot([1,2,3], [1,2,3])

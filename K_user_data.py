@@ -76,5 +76,4 @@ def update_user_data(data):
     json5.dump(data, file, indent=2)
 
 
-
 generate_default()

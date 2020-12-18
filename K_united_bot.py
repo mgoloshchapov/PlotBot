@@ -169,51 +169,76 @@ def getset_command(message):
 
 
 # function that asks for axis names, and sends plot to user
-def bot_plot(message, x, y, x_label=None, x_tick=None, y_label=None, y_tick=None, title=None, init=False):
+def bot_plot(message, x, y,
+             grid=None,
+             x_label=None,
+             x_tick=None,
+             y_label=None,
+             y_tick=None,
+             title=None,
+             cdots=None,
+             mnk=None,
+             init=False):
     data = read_user_data(message.chat.id)
 
     if init:
         bot.send_message(message.chat.id,
-                         "Come up with a name for the x axis:")
+                         'Do you need grid?(y/n)')
         bot.register_next_step_handler(message, bot_plot, x, y)
-
+    elif isinstance(grid, type(None)):
+        grid = message.text.lower()
+        if 'y' in grid:
+            grid = 'yes'
+        bot.send_message(message.chat.id,
+                         "Come up with a name for the x axis:")
+        bot.register_next_step_handler(message, bot_plot, x, y, grid)
     elif isinstance(x_label, type(None)):
         x_label = message.text
         bot.send_message(message.chat.id,
                          "Come up with a tick for the x axis")
-        bot.register_next_step_handler(message, bot_plot, x, y, x_label)
-
+        bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label)
     elif isinstance(x_tick, type(None)):
         try:
             x_tick = message.text
             x_tick = x_tick.replace(',', '.')
             x_tick = float(x_tick)
             bot.send_message(message.chat.id, "Come up with a name for the y axis:")
-            bot.register_next_step_handler(message, bot_plot, x, y, x_label, x_tick)
+            bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label, x_tick)
         except ValueError:
             bot.send_message(message.chat.id, "Please be serious. I'm kind of bored by that old trick")
             bot.send_message(message.chat.id, "Please enter x tick once again.")
-            bot.register_next_step_handler(message, bot_plot, x, y, x_label)
+            bot.register_next_step_handler(message, bot_plot, x, y, grid,  x_label)
     elif isinstance(y_label, type(None)):
         y_label = message.text
         bot.send_message(message.chat.id,
                          "Come up with a tick for the y axis")
-        bot.register_next_step_handler(message, bot_plot, x, y, x_label, x_tick, y_label)
-
+        bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label, x_tick, y_label)
     elif isinstance(y_tick, type(None)):
         try:
             y_tick = message.text
             y_tick = y_tick.replace(',', '.')
             y_tick = float(y_tick)
             bot.send_message(message.chat.id, "Come up with a plot title")
-            bot.register_next_step_handler(message, bot_plot, x, y, x_label, x_tick, y_label, y_tick)
+            bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label, x_tick, y_label, y_tick)
         except ValueError:
             bot.send_message(message.chat.id, "Is that some human inside joke?")
             bot.send_message(message.chat.id, "Please enter y tick once again.")
-            bot.register_next_step_handler(message, bot_plot, x, y, x_label, x_tick, y_label)
-    else:
+            bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label, x_tick, y_label)
+    elif isinstance(title, type(None)):
         title = message.text
-        plot(x, y, x_label, x_tick, y_label, y_tick, title, **data['visual'])
+        bot.send_message(message.chat.id, 'Would you like to connect the dots?(y/n)')
+        bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label, x_tick, y_label, y_tick, title)
+    elif isinstance(cdots, type(None)):
+        cdots = message.text.lower()
+        if 'y' in cdots:
+            cdots = 'yes'
+        bot.send_message(message.chat.id, 'Would you like to plot the best fit line(least squares)?(y/n)')
+        bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label, x_tick, y_label, y_tick, title, cdots)
+    elif isinstance(mnk, type(None)):
+        mnk = message.text.lower()
+        if 'y' in mnk:
+            mnk = 'yes'
+        plot(x, y, grid, x_label, x_tick, y_label, y_tick, title, cdots, mnk, **data['visual'])
         photo = open('plot.png', 'rb')
         bot.send_photo(message.chat.id, photo)
 

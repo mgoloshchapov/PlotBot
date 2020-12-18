@@ -16,7 +16,6 @@ def welcome(message):
         open('user_data/user_{}.json5'.format(message.chat.id))
     except FileNotFoundError:
         new_user(message.chat.id)
-
     # greeting
     logo = open('Logo.png', 'rb')
     bot.send_photo(message.chat.id, logo)
@@ -26,7 +25,6 @@ def welcome(message):
                      "\n"
                      "Type /doc, to send me a excel document, type /reg to enter your values manually.\n"
                      "Use /set to change your plot settings")
-
 
 
 # function for reading excel files
@@ -54,9 +52,14 @@ def reg_command(message, x=None, y=None):
             bot.register_next_step_handler(message, reg_command, x)
         elif isinstance(y, type(None)):
             y = np.array(list(map(float, message.text.split())))
-            bot.send_message(message.chat.id,
-                             'Your values are: \nx: ' + str(x) + '\ny: ' + str(y))
-            bot_plot(message, x, y, init=True)
+            if len(x) != len(y):
+                bot.send_message(message.chat.id, 'Some of the data is missing. Do not play with me, human!')
+                bot.send_message(message.chat.id, "Give it a try. Enter the x values separated by spaces one more time:")
+                bot.register_next_step_handler(message, reg_command, None, None)
+            else:
+                bot.send_message(message.chat.id,
+                                 'Your values are: \nx: ' + str(x) + '\ny: ' + str(y))
+                bot_plot(message, x, y, init=True)
 
 
 @bot.message_handler(commands=['set'])
@@ -93,26 +96,37 @@ def bot_plot(message, x, y, x_label=None, x_tick=None, y_label=None, y_tick=None
         bot.register_next_step_handler(message, bot_plot, x, y, x_label)
 
     elif isinstance(x_tick, type(None)):
-        x_tick = float(message.text)
-        bot.send_message(message.chat.id, "Come up with a name for the y axis:")
-        bot.register_next_step_handler(message, bot_plot, x, y, x_label, x_tick)
-
+        try:
+            x_tick = message.text
+            x_tick = x_tick.replace(',', '.')
+            x_tick = float(x_tick)
+            bot.send_message(message.chat.id, "Come up with a name for the y axis:")
+            bot.register_next_step_handler(message, bot_plot, x, y, x_label, x_tick)
+        except ValueError:
+            bot.send_message(message.chat.id, "Please be serious. I'm kind of bored by that old trick")
+            bot.send_message(message.chat.id, "Please enter x tick once again.")
+            bot.register_next_step_handler(message, bot_plot, x, y, x_label)
     elif isinstance(y_label, type(None)):
         y_label = message.text
         bot.send_message(message.chat.id, "Come up with a tick for the y axis")
         bot.register_next_step_handler(message, bot_plot, x, y, x_label, x_tick, y_label)
 
     elif isinstance(y_tick, type(None)):
-        y_tick = float(message.text)
-        bot.send_message(message.chat.id, "Come up with a plot title")
-        bot.register_next_step_handler(message, bot_plot, x, y, x_label, x_tick, y_label, y_tick)
-
+        try:
+            y_tick = message.text
+            y_tick = y_tick.replace(',', '.')
+            y_tick = float(y_tick)
+            bot.send_message(message.chat.id, "Come up with a plot title")
+            bot.register_next_step_handler(message, bot_plot, x, y, x_label, x_tick, y_label, y_tick)
+        except ValueError:
+            bot.send_message(message.chat.id, "Is that some human inside joke?")
+            bot.send_message(message.chat.id, "Please enter y tick once again.")
+            bot.register_next_step_handler(message, bot_plot, x, y, x_label, x_tick, y_label)
     else:
         title = message.text
         plot(x, y, x_label, x_tick, y_label, y_tick, title, **data['visual'])
         photo = open('plot.png', 'rb')
         bot.send_photo(message.chat.id, photo)
-
 
 
 # function that reads excel file

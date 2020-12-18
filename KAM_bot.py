@@ -69,7 +69,7 @@ def reg_command(message, x=None, y=None):
         if isinstance(x, type(None)):
             try:
                 txt = message.text.replace(',', '.')
-                x = np.array(list(map(float, txt.split())))
+                x = np.array(list(map(float, txt.split(' '))))
                 bot.send_message(message.chat.id,
                                  "Enter y values separated by spaces:")
                 bot.register_next_step_handler(message, reg_command, x)
@@ -79,7 +79,7 @@ def reg_command(message, x=None, y=None):
         elif isinstance(y, type(None)):
             try:
                 txt = message.text.replace(',', '.')
-                y = np.array(list(map(float, txt.split())))
+                y = np.array(list(map(float, txt.split(' '))))
                 if len(x) != len(y):
                     bot.send_message(message.chat.id, 'Some of the data is missing. Do not play with me, human!')
                     bot.send_message(message.chat.id,

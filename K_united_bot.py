@@ -18,11 +18,15 @@ def welcome(message):
         new_user(message.chat.id)
 
     # greeting
+    logo = open('Logo.png', 'rb')
+    bot.send_photo(message.chat.id, logo)
     bot.send_message(message.chat.id,
                      "I am a robot. I have no heart. My only job is to take your data "
                      "and to convert them to arrays.\n"
+                     "\n"
                      "Type /doc, to send me a excel document, type /reg to enter your values manually.\n"
                      "Use /set to change your plot settings")
+
 
 
 # function for reading excel files

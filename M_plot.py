@@ -12,6 +12,7 @@ def plot(x, y,
          line_color='black',
          line_label='',
          dot_label='',
+         linestyle=''
          ):
 
     plt.title(title)
@@ -23,7 +24,7 @@ def plot(x, y,
     plt.yticks([min(y) + i * y_tick for i in range(round((max(y) - min(y)) / y_tick) + 1)])
     plt.grid()
 
-    plt.plot(x, y, color=line_color, label=line_label)  # line
+    plt.plot(x, y, color=line_color, label=line_label, linestyle=linestyle)  # line
 
     plt.scatter(x, y, color=dot_color, label=dot_label)  # dots
 

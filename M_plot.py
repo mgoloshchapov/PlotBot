@@ -23,9 +23,11 @@ def plot(x, y,
     plt.ylabel(y_label)
     plt.title(title)
 
+
+    plt.xticks([min(x) + i*x_tick for i in range(round((max(x)-min(x))/x_tick)+1)])
+    plt.yticks([min(y) + i * y_tick for i in range(round((max(y) - min(y)) / y_tick) + 1)])
+
     if grid == 'yes':
-        plt.xticks([min(x) + i*x_tick for i in range(round((max(x)-min(x))/x_tick)+1)])
-        plt.yticks([min(y) + i * y_tick for i in range(round((max(y) - min(y)) / y_tick) + 1)])
         plt.grid()
 
     plt.scatter(x, y, color=dot_color, label=dot_label)  # dots

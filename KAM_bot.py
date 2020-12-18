@@ -16,18 +16,22 @@ def welcome(message):
         open('user_data/user_{}.json5'.format(message.chat.id))
     except FileNotFoundError:
         new_user(message.chat.id)
-
     # greeting
     logo = open('Logo.png', 'rb')
     bot.send_photo(message.chat.id, logo)
+
+    kb = telebot.types.ReplyKeyboardMarkup()
+    kb.row('/doc', '/reg', '/set', 'docs', 'datacheck')
+
     bot.send_message(message.chat.id,
                      "I am a robot. I have no heart. My only job is to take your data "
                      "and to convert them to arrays.\n"
                      "\n"
-                     "Type /doc, to send plot an excel document, type /reg to enter your values manually.\n"
+                     "Type /doc, to send plot an excel document.\n"
+                     "Type /reg to enter your values manually.\n"
                      "Use /set to change your plot settings.\n"
                      "Use /docs to save a datasheet for advanced plotting.\n"
-                     "Use /datacheck to see what data you have saved")
+                     "Use /datacheck to see what data you have saved", reply_markup=kb)
 
 
 # function for checking data
@@ -63,21 +67,31 @@ def reg_command(message, x=None, y=None):
         bot.register_next_step_handler(message, reg_command)
     else:
         if isinstance(x, type(None)):
-            x = np.array(list(map(float, message.text.split())))
-            bot.send_message(message.chat.id,
-                             "Enter y values separated by spaces:")
-            bot.register_next_step_handler(message, reg_command, x)
-        elif isinstance(y, type(None)):
-            y = np.array(list(map(float, message.text.split())))
-            if len(x) != len(y):
-                bot.send_message(message.chat.id, 'Some of the data is missing. Do not play with me, human!')
-                bot.send_message(message.chat.id, "Give it a try. Enter the x values separated by spaces one more time:")
-                bot.register_next_step_handler(message, reg_command, None, None)
-            else:
+            try:
+                txt = message.text.replace(',', '.')
+                x = np.array(list(map(float, txt.split())))
                 bot.send_message(message.chat.id,
-                                 'Your values are: \nx: ' + str(x) + '\ny: ' + str(y))
-                bot_plot(message, x, y, init=True)
-
+                                 "Enter y values separated by spaces:")
+                bot.register_next_step_handler(message, reg_command, x)
+            except ValueError:
+                bot.send_message(message.chat.id, "It seems like your data is incorrect. Please enter x once again.")
+                bot.register_next_step_handler(message, reg_command)
+        elif isinstance(y, type(None)):
+            try:
+                txt = message.text.replace(',', '.')
+                y = np.array(list(map(float, txt.split())))
+                if len(x) != len(y):
+                    bot.send_message(message.chat.id, 'Some of the data is missing. Do not play with me, human!')
+                    bot.send_message(message.chat.id,
+                                     "Give it a try. Enter the x values separated by spaces one more time:")
+                    bot.register_next_step_handler(message, reg_command, None, None)
+                else:
+                    bot.send_message(message.chat.id,
+                                     'Your values are: \nx: ' + str(x) + '\ny: ' + str(y))
+                    bot_plot(message, x, y, init=True)
+            except ValueError:
+                bot.send_message(message.chat.id, "It seems like your data is incorrect. Please enter y once again.")
+                bot.register_next_step_handler(message, reg_command, x)
 
 # settings command
 @bot.message_handler(commands=['set'])
@@ -156,8 +170,6 @@ def set_command(message, setting=None):
 # get saved settings
 @bot.message_handler(commands=['getset'])
 def getset_command(message):
-
-
     data = read_user_data(message.chat.id)
     settings = dict()
     settings.update(data["other"])
@@ -184,13 +196,13 @@ def bot_plot(message, x, y,
     data = read_user_data(message.chat.id)
 
     if init:
+        kb = telebot.types.ReplyKeyboardMarkup(True, True)
+        kb.row('Yes', 'No')
         bot.send_message(message.chat.id,
-                         'Do you need grid?(y/n)')
+                         'Do you need grid?', reply_markup=kb)
         bot.register_next_step_handler(message, bot_plot, x, y)
     elif isinstance(grid, type(None)):
         grid = message.text.lower()
-        if 'y' in grid:
-            grid = 'yes'
         bot.send_message(message.chat.id,
                          "Come up with a name for the x axis:")
         bot.register_next_step_handler(message, bot_plot, x, y, grid)
@@ -227,22 +239,35 @@ def bot_plot(message, x, y,
             bot.send_message(message.chat.id, "Please enter y tick once again.")
             bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label, x_tick, y_label)
     elif isinstance(title, type(None)):
+        kb = telebot.types.ReplyKeyboardMarkup(True, True)
+        kb.row('Yes', 'No')
         title = message.text
-        bot.send_message(message.chat.id, 'Would you like to connect the dots?(y/n)')
+        bot.send_message(message.chat.id, 'Would you like to connect the dots?', reply_markup=kb)
         bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label, x_tick, y_label, y_tick, title)
     elif isinstance(cdots, type(None)):
         cdots = message.text.lower()
-        if 'y' in cdots:
-            cdots = 'yes'
-        bot.send_message(message.chat.id, 'Would you like to plot the best fit line(least squares)?(y/n)')
+        kb = telebot.types.ReplyKeyboardMarkup(True, True)
+        kb.row('Yes', 'No')
+        bot.send_message(message.chat.id, 'Would you like to plot the best fit line(least squares)?', reply_markup=kb)
         bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label, x_tick, y_label, y_tick, title, cdots)
     elif isinstance(mnk, type(None)):
         mnk = message.text.lower()
-        if 'y' in mnk:
-            mnk = 'yes'
         plot(x, y, grid, x_label, x_tick, y_label, y_tick, title, cdots, mnk, **data['visual'])
         photo = open('plot.png', 'rb')
         bot.send_photo(message.chat.id, photo)
+        kb = telebot.types.ReplyKeyboardMarkup(True, True)
+        kb.row('Yes', 'No')
+        bot.send_message(message.chat.id, 'Would you like to plot something else?', reply_markup=kb)
+        bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label, x_tick, y_label, y_tick, title, cdots, mnk)
+    else:
+        if message.text == 'Yes':
+            bot.send_message(message.chat.id,
+                             "Enter x values separated by spaces:")
+            bot.register_next_step_handler(message, reg_command)
+        else:
+            bot.send_message(message.chat.id,
+                             "It's nice to work with you human! If you want to plot something again, just press /start")
+
 
 
 # function that reads excel file

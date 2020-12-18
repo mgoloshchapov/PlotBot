@@ -156,6 +156,8 @@ def set_command(message, setting=None):
 # get saved settings
 @bot.message_handler(commands=['getset'])
 def getset_command(message):
+
+
     data = read_user_data(message.chat.id)
     settings = dict()
     settings.update(data["other"])

@@ -1,14 +1,24 @@
 {
   user: "default",
+  dataframe: null,
+  other: {
+    figsize: [
+      6.4,
+      4.8,
+    ],
+    dpi: 100,
+    approx: true,
+  },
   text: {
+    line_label: "",
+    dot_label: "",
     title: "",
     x_axis_name: "",
     y_axis_name: "",
-    line_label: "",
-    dot_label: "",
   },
   visual: {
     dot_color: "black",
     line_color: "black",
+    linestyle: "-",
   },
 }

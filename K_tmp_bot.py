@@ -24,7 +24,7 @@ def file_handler(message):
     data = bot.get_file(message.document.file_id)
     print(data)
     url = 'https://api.telegram.org/file/bot{}/{}'.format(token, data.file_path)
-    x, y = excel_array_url(url)
+    x, y = excel_x_y(url)
 
     bot.send_message(message.chat.id,
                      'Your values are: \nx: ' + str(x) + '\ny: ' + str(y))

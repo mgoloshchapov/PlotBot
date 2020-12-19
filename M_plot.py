@@ -36,6 +36,8 @@ def plot(x, y,
         plt.plot(x, y, color=line_color, label=line_label, linestyle=linestyle)  # line
 
     if mnk == 'yes':
+        x = np.array(x)
+        y = np.array(y)
         A = np.vstack([x, np.ones(len(x))]).T  # least square
         m, c = np.linalg.lstsq(A, y, rcond=None)[0]
         plt.plot(x, m*x + c)

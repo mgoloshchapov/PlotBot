@@ -70,4 +70,5 @@ class Equation():
 # a = np.array([1, 2, 3])
 # b = np.array([2, 3, 4])
 # c = np.array([3, 4, 5])
-# print(billie_jean(a, b, c))
+# d = [a, b, c]
+# print(billie_jean(*d))

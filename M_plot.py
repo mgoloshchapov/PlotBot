@@ -4,13 +4,13 @@ import numpy as np
 
 def plot(x, y,
          grid,
-         x_label,
          x_tick,
-         y_label,
          y_tick,
          title,
          cdots,  # plot connected dots
          mnk,  # plot regression
+         x_label,
+         y_label,
          dot_color='black',
          line_color='black',
          line_label='',

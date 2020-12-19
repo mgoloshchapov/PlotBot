@@ -1,4 +1,4 @@
-# the main body of the bot
+# the main body of the botfrom K_eqation_manager import Equation
 from config import token
 import telebot
 from K_ecxel_array import *
@@ -432,7 +432,7 @@ def enter_variables(message, variables, expr, result=None):
     else:
         bot.send_message(message.chat.id,
                          "Enter the name of an existing column or a new one.")
-        bot.register_next_step_handler(message, save_result_to_column(), result, expr)
+        bot.register_next_step_handler(message, save_result_to_column, result, expr)
 
 
 # the third child of the funciton

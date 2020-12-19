@@ -38,11 +38,18 @@ def update_dataframe(user_id, dataframe):
     file = open('user_data/user_{}.json5'.format(user_id), 'r')
     data = json5.load(file)
     dict_frame = dataframe.to_dict()
-    # print('cum')
-    # print(dict_frame)
     data['dataframe'] = dict_frame
     file = open('user_data/user_{}.json5'.format(user_id), 'w')
     json5.dump(data, file, indent=2)
+
+
+def reset_user_dataframe(user_id):
+    file = open('user_data/user_{}.json5'.format(user_id), 'r')
+    data = json5.load(file)
+    data['dataframe'] = dict()
+    file = open('user_data/user_{}.json5'.format(user_id), 'w')
+    json5.dump(data, file, indent=2)
+    return pandas.DataFrame()
 
 
 def new_user(user_id):

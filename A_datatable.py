@@ -41,7 +41,6 @@ def decision_add_del(message):
 
 
 def column_delete(message):
-    print(message.text)
     val = message.text
     data = get_dataframe(message.chat.id)
     try:
@@ -63,7 +62,6 @@ def column_delete(message):
 
 def decision_return(message):
     if message.text == 'Yes':
-        bot.register_next_step_handler(message, column_naming)
         keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
         keyboard.row('Add', 'Delete')
         bot.send_message(message.from_user.id,
@@ -81,8 +79,10 @@ def column_naming(message, init=False):
 
 def table_content_change(message, column_title, init=False):
     val = message.text
-    print(val)
-    data = get_dataframe(message.chat.id)
+    if init:
+        data = reset_user_dataframe(message.chat.id)
+    else:
+        data = get_dataframe(message.chat.id)
     new_column = list(map(float, val.split()))
     if len(new_column) != len(data) and not init:
         bot.send_message(message.chat.id,

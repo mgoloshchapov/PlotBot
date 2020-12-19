@@ -6,6 +6,7 @@ import pandas
 
 def generate_default():
     data = {'user': 'default',
+            'plots_made': 0,
             'dataframe': None,
             'other':
                 {'figsize': [6.4, 4.8],
@@ -25,6 +26,9 @@ def generate_default():
             }
     file = open('user_data/user_default.json5', 'w')
     json5.dump(data, file, indent=2)
+
+
+generate_default()
 
 
 def get_dataframe(user_id):
@@ -80,6 +84,14 @@ def modify_user_data(user_id, datum, *path):
 def update_user_data(data):
     user = data['user']
     file = open('user_data/user_{}.json5'.format(user), 'w')
+    json5.dump(data, file, indent=2)
+
+
+def increment_plot_count(user_id):
+    file = open('user_data/user_{}.json5'.format(user_id), 'r')
+    data = json5.load(file)
+    data["plots_made"] += 1
+    file = open('user_data/user_{}.json5'.format(user_id), 'w')
     json5.dump(data, file, indent=2)
 
 

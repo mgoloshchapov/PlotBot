@@ -1,5 +1,6 @@
 {
   user: "default",
+  plots_made: 0,
   dataframe: null,
   other: {
     figsize: [

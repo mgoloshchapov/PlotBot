@@ -41,6 +41,7 @@ def data_check(message):
     bot.send_message(message.chat.id,
                      "Your data is:\n" + str(dataframe))
 
+
 # function for reading excel files
 @bot.message_handler(commands=['doc'])
 def doc_command(message):
@@ -56,11 +57,6 @@ def docs_command(message):
     bot.send_message(message.chat.id,
                      "Please send an excel file with your data.")
     bot.register_next_step_handler(message, doc_save)
-
-
-
-
-
 
 
 # function for reading manual input
@@ -183,6 +179,7 @@ def data_show(message):
     data = get_dataframe(message.chat.id)
     bot.send_message(message.from_user.id, str(data))
 
+
 # settings command
 @bot.message_handler(commands=['set'])
 def set_command(message, setting=None):
@@ -284,7 +281,6 @@ def bot_plot(message, x, y,
              cdots=None,
              mnk=None,
              ):
-
     data = read_user_data(message.chat.id)
 
     if init:
@@ -331,16 +327,19 @@ def bot_plot(message, x, y,
         kb = telebot.types.ReplyKeyboardMarkup(True, True)
         kb.row('Yes', 'No')
         bot.send_message(message.chat.id, 'Would you like to plot the best fit line(least squares)?', reply_markup=kb)
-        bot.register_next_step_handler(message, bot_plot, x, y, x_label, y_label, False, grid, x_tick, y_tick, title, cdots)
+        bot.register_next_step_handler(message, bot_plot, x, y, x_label, y_label, False, grid, x_tick, y_tick, title,
+                                       cdots)
     elif isinstance(mnk, type(None)):
         mnk = message.text.lower()
         plot(x, y, grid, x_tick, y_tick, title, cdots, mnk, x_label, y_label, **data['visual'])
         photo = open('plot.png', 'rb')
         bot.send_photo(message.chat.id, photo)
+        increment_plot_count(message.chat.id)
         kb = telebot.types.ReplyKeyboardMarkup(True, True)
         kb.row('Yes', 'No')
         bot.send_message(message.chat.id, 'Would you like to plot something else?', reply_markup=kb)
-        bot.register_next_step_handler(message, bot_plot, x, y, x_label, y_label, False, grid, x_tick, y_tick, title, cdots, mnk)
+        bot.register_next_step_handler(message, bot_plot, x, y, x_label, y_label, False, grid, x_tick, y_tick, title,
+                                       cdots, mnk)
     else:
         if message.text == 'Yes':
             bot.send_message(message.chat.id,
@@ -349,7 +348,6 @@ def bot_plot(message, x, y,
         else:
             bot.send_message(message.chat.id,
                              "It's nice to work with you human! If you want to plot something again, just press /start")
-
 
 
 # function that reads excel file

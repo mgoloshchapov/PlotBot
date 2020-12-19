@@ -1,5 +1,5 @@
-# the main body of the botfrom K_eqation_manager import Equation
-from K_eqation_manager import Equation
+# the main body of the bot
+from K_eqation_manager import *
 from config import token
 import telebot
 from K_ecxel_array import *
@@ -22,7 +22,7 @@ def welcome(message):
     bot.send_photo(message.chat.id, logo)
 
     kb = telebot.types.ReplyKeyboardMarkup()
-    kb.row('/doc', '/reg', '/set', '/docs', '/datacheck')
+    kb.row('/doc', '/reg', '/set', '/docs', '/datacheck', '/function')
 
     bot.send_message(message.chat.id,
                      "I am a robot. I have no heart. My only job is to take your data "
@@ -32,7 +32,8 @@ def welcome(message):
                      "Type /reg to enter your values manually.\n"
                      "Use /set to change your plot settings.\n"
                      "Use /docs to save a datasheet for advanced plotting.\n"
-                     "Use /datacheck to see what data you have saved", reply_markup=kb)
+                     "Use /datacheck to see what data you have saved.\n"
+                     "Use /function to make a function to manipulate your data.", reply_markup=kb)
 
 
 # function for checking data

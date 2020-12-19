@@ -21,7 +21,7 @@ def welcome(message):
     bot.send_photo(message.chat.id, logo)
 
     kb = telebot.types.ReplyKeyboardMarkup()
-    kb.row('/doc', '/reg', '/set', 'docs', 'datacheck')
+    kb.row('/doc', '/reg', '/set', '/docs', '/datacheck')
 
     bot.send_message(message.chat.id,
                      "I am a robot. I have no heart. My only job is to take your data "
@@ -69,7 +69,7 @@ def reg_command(message, x=None, y=None):
         if isinstance(x, type(None)):
             try:
                 txt = message.text.replace(',', '.')
-                x = np.array(list(map(float, txt.split(' '))))
+                x = list(map(float, txt.split(' ')))
                 bot.send_message(message.chat.id,
                                  "Enter y values separated by spaces:")
                 bot.register_next_step_handler(message, reg_command, x)
@@ -79,7 +79,7 @@ def reg_command(message, x=None, y=None):
         elif isinstance(y, type(None)):
             try:
                 txt = message.text.replace(',', '.')
-                y = np.array(list(map(float, txt.split(' '))))
+                y = list(map(float, txt.split(' ')))
                 if len(x) != len(y):
                     bot.send_message(message.chat.id, 'Some of the data is missing. Do not play with me, human!')
                     bot.send_message(message.chat.id,
@@ -87,7 +87,9 @@ def reg_command(message, x=None, y=None):
                     bot.register_next_step_handler(message, reg_command, None, None)
                 else:
                     bot.send_message(message.chat.id,
-                                     'Your values are: \nx: ' + str(x) + '\ny: ' + str(y))
+                                     'Your values are: \nx: {} \ny: {}'.format(str(x), str(y)))
+                    x = np.array(x)
+                    y = np.array(y)
                     bot_plot(message, x, y, init=True)
             except ValueError:
                 bot.send_message(message.chat.id, "It seems like your data is incorrect. Please enter y once again.")
@@ -272,12 +274,16 @@ def bot_plot(message, x, y,
 
 # function that reads excel file
 def doc_read(message):
-    data = bot.get_file(message.document.file_id)
-    url = 'https://api.telegram.org/file/bot{}/{}'.format(token, data.file_path)
-    x, y = excel_x_y(url)
-    bot.send_message(message.chat.id,
-                     'Your values are: \nx: ' + str(x) + '\ny: ' + str(y))
-    bot_plot(message, x, y, init=True)
+    try:
+        data = bot.get_file(message.document.file_id)
+        url = 'https://api.telegram.org/file/bot{}/{}'.format(token, data.file_path)
+        x, y = excel_x_y(url)
+        bot.send_message(message.chat.id,
+                         'Your values are: \nx: ' + str(x) + '\ny: ' + str(y))
+        bot_plot(message, x, y, init=True)
+    except AttributeError:
+        bot.send_message(message.chat.id, 'Sorry, something is wrong with the format. Please send the file again')
+        bot.register_next_step_handler(message, doc_read)
 
 
 # function for saving dataframes

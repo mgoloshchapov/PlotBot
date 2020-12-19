@@ -11,13 +11,13 @@ def generate_default():
             'other':
                 {'figsize': [6.4, 4.8],
                  'dpi': 100,
-                 'approx': True},
+                 'mnk': True},
             'text':
                 {'line_label': '',
                  'dot_label': '',
                  'title': '',
-                 'x_axis_name': '',
-                 'y_axis_name': ''
+                 'x_label': '',
+                 'y_label': ''
                  },
             'visual':
                 {'dot_color': 'black',

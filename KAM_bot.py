@@ -1,4 +1,5 @@
 # the main body of the botfrom K_eqation_manager import Equation
+from K_eqation_manager import Equation
 from config import token
 import telebot
 from K_ecxel_array import *

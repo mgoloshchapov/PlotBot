@@ -1,92 +1,110 @@
 import telebot
-import pandas as pd
-from telebot import types
+from config import token
+from K_user_data import *
 
-bot = telebot.TeleBot("1489374378:AAEKhKVW91XaEgRybkOwvXRM2vjmBLInzQc", parse_mode=None)
-
-error = 0
-
-@bot.message_handler(commands=['/restart'])
-def restart(message):
-    global error
-    bot.send_message('Что-то сломалось) , бот перезапущен, напишите что-нибудь')
-    error = 0
-    bot.register_next_step_handler(message, start)
+bot = telebot.TeleBot(token)
 
 
-@bot.message_handler(content_types=['text'])
-def start(message):
-    global data
-    if error != 1:
-        data=pd.DataFrame()
-    if message.text == '/plot':
-        keyboard1 = telebot.types.ReplyKeyboardMarkup(True, True)
-        keyboard1.row('Да', 'Нет')
-        bot.send_message(message.chat.id, 'Будем добавлять еще столбец в таблицу?', reply_markup=keyboard1)
-        bot.register_next_step_handler(message , decision)
-    else:
-        bot.send_message(message.from_user.id, 'Напиши /plot')
+@bot.message_handler(commands=["editdata"])
+def editdata_command(message):
+    keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
+    keyboard.row('New', 'Edit')
+    bot.send_message(message.chat.id,
+                     "Shall I create a new datatable, or edit yours?",
+                     reply_markup=keyboard)
+    bot.register_next_step_handler(message, decision_new)
 
 
-@bot.message_handler(content_types=['text'])
-def decision(message):
-    bot.send_message(message.from_user.id, ' тут'+ message.text)
-    if message.text == 'Да':
-        bot.send_message(message.from_user.id, 'Введите название переменной(столбца)')
+def decision_new(message):
+    if message.text == 'New':
+        bot.send_message(message.from_user.id,
+                         'Come up with a name for your first variable.')
+        bot.register_next_step_handler(message, column_naming, True)
+    elif message.text == 'Edit':
+        keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
+        keyboard.row('Add', 'Delete')
+        bot.send_message(message.from_user.id,
+                         'Would you like to add or delete a new column?',
+                         reply_markup=keyboard)
+        bot.register_next_step_handler(message, decision_add_del)
+
+
+def decision_add_del(message):
+    if message.text == 'Add':
+        bot.send_message(message.from_user.id,
+                         'Come up with a name for your variable.')
         bot.register_next_step_handler(message, column_naming)
-    elif message.text == 'Нет':
-        bot.send_message(message.from_user.id,'Перейдем к проверке введенных данных')
-        data_show(message)
-    else:
-        bot.send_message(message.from_user.id,'Шизоид ты как это сделал, перезапускай все')
-
-def column_naming(message):
-    bot.send_message(message.from_user.id, 'секция с названием')
-    global column_title
-    column_title = str(message.text)
-    bot.send_message(message.from_user.id, 'Введите данные соответствующие переменной(столбцу)')
-    bot.register_next_step_handler(message, table_content_change)
+    elif message.text == 'Delete':
+        bot.send_message(message.from_user.id,
+                         'Which variable would you like to delete?')
+        bot.register_next_step_handler(message, column_delete)
 
 
-@bot.message_handler(content_types=['text'])
-def table_content_change(message):
-    global column_title
-    global error
-    bot.send_message(message.from_user.id, 'aaaaaa')
+def column_delete(message):
+    print(message.text)
+    val = message.text
+    data = get_dataframe(message.chat.id)
     try:
-        data[column_title] = message.text.split()
-    except BaseException:
-        bot.send_message(message.from_user.id, 'Ошибка, следите за количеством элементов. Введите переменные данные соответствующие этой переменной(столбцу) еще раз')
-        error = 1
-        return
-    data[column_title] = message.text.split()
-    result = ' '.join(data.columns) + '\n'
-    a = data.values
-    for i in range(len(data[column_title])):
-        temp_string = ' '.join((a[i]))
-        result += temp_string
-        result += "\n"
-    bot.send_message(message.chat.id, result)
-    keyboard1 = telebot.types.ReplyKeyboardMarkup(True, True)
-    keyboard1.row('Да', 'Нет')
-    bot.send_message(message.chat.id, 'Будем добавлять еще столбец в таблицу?', reply_markup=keyboard1)
-    bot.register_next_step_handler(message, decision)
+        del data[val]
+        bot.send_message(message.chat.id,
+                         'I have successfully deleted that column.')
+        update_dataframe(message.chat.id, data)
+    except KeyError:
+        bot.send_message(message.chat.id,
+                         "I did not manage to delete that column. But you don't have to worry, "
+                         "there never was such a column...")
+    keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
+    keyboard.row('Yes', 'No')
+    bot.send_message(message.chat.id,
+                     "Should wee keep going?",
+                     reply_markup=keyboard)
+    bot.register_next_step_handler(message, decision_return)
 
-@bot.message_handler(content_types=['text'])
+
+def decision_return(message):
+    if message.text == 'Yes':
+        bot.register_next_step_handler(message, column_naming)
+        keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
+        keyboard.row('Add', 'Delete')
+        bot.send_message(message.from_user.id,
+                         'Would you like to add or delete a new column?',
+                         reply_markup=keyboard)
+        bot.register_next_step_handler(message, decision_add_del)
+
+
+def column_naming(message, init=False):
+    column_title = str(message.text)
+    bot.send_message(message.from_user.id,
+                     'Now enter the values for that column.')
+    bot.register_next_step_handler(message, table_content_change, column_title, init)
+
+
+def table_content_change(message, column_title, init=False):
+    val = message.text
+    print(val)
+    data = get_dataframe(message.chat.id)
+    new_column = list(map(float, val.split()))
+    if len(new_column) != len(data) and not init:
+        bot.send_message(message.chat.id,
+                         "Unfortunately, a column must have the same length as your table.")
+    else:
+        data[column_title] = new_column
+        update_dataframe(message.chat.id, data)
+        bot.send_message(message.chat.id,
+                         "Successfully added a new column!")
+    keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
+    keyboard.row('Yes', 'No')
+    bot.send_message(message.chat.id,
+                     "Should wee keep going?",
+                     reply_markup=keyboard)
+    bot.register_next_step_handler(message, decision_return)
+
+
+@bot.message_handler(commands=["showdata"])
 def data_show(message):
-    global data
-    result = ' '.join(data.columns) + '\n'
-    a = data.values
-    try :
-        len(data[column_title])
-    except BaseException:
-        return
-    for i in range(len(data[column_title])):
-        temp_string = ' '.join((a[i]))
-        result += temp_string
-        result += "\n"
-    bot.send_message(message.from_user.id, result)
-    bot.register_next_step_handler(message, start)
+    data = get_dataframe(message.chat.id)
+    bot.send_message(message.from_user.id,
+                     "The data you have saved is:\n" + str(data))
 
 
 bot.polling(none_stop=True)

@@ -21,7 +21,7 @@ def welcome(message):
     bot.send_photo(message.chat.id, logo)
 
     kb = telebot.types.ReplyKeyboardMarkup()
-    kb.row('/doc', '/reg', '/set', 'docs', 'datacheck')
+    kb.row('/doc', '/reg', '/set', '/docs', '/datacheck')
 
     bot.send_message(message.chat.id,
                      "I am a robot. I have no heart. My only job is to take your data "
@@ -243,9 +243,9 @@ def set_command(message, setting=None):
         if settings_types[setting] == 1:
             output = message.text
         elif settings_types[setting] == 2:
-            if 'N' in message.text:
+            if 'N' in message.text.upper():
                 output = True
-            elif 'Y' in message.text:
+            elif 'Y' in message.text.upper():
                 output = False
             else:
                 bot.send_message(message.chat.id,
@@ -386,16 +386,19 @@ def doc_save(message, dataframe=None):
         data = bot.get_file(message.document.file_id)
         url = 'https://api.telegram.org/file/bot{}/{}'.format(token, data.file_path)
         dataframe = excel_dataframe(url)
+        keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
+        keyboard.row('Yes', 'No')
         bot.send_message(message.chat.id,
-                         "You data is:\n" + str(dataframe) + "\nDo you with to save it? [Y/N]")
+                         "You data is:\n" + str(dataframe) + "\nDo you with to save it?",
+                         reply_markup=keyboard)
         bot.register_next_step_handler(message, doc_save, dataframe)
     else:
-        if 'Y' in message.text:
+        if message.text == "Yes":
             print(dataframe)
             update_dataframe(message.chat.id, dataframe)
             bot.send_message(message.chat.id,
                              "Your data has been saved.")
-        elif 'N' in message.text:
+        elif message.text == "No":
             bot.send_message(message.chat.id,
                              "Your data has been discarded")
         else:

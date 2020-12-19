@@ -72,11 +72,27 @@ def docs_command(message):
 @bot.message_handler(commands=['reg'])
 def editdata_command(message):
     keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
-    keyboard.row('New', 'Edit')
+    keyboard.row('Plot', 'Change')
     bot.send_message(message.chat.id,
-                     "Shall I create a new data table, or edit yours?",
+                     "Would you like to change your data, or go straight ahead to plotting?",
                      reply_markup=keyboard)
-    bot.register_next_step_handler(message, decision_new)
+    bot.register_next_step_handler(message, decision_plot)
+
+
+def decision_plot(message):
+    if message.text == 'Change':
+        keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
+        keyboard.row('New', 'Edit')
+        bot.send_message(message.chat.id,
+                         "Shall I create a new data table, or edit yours?",
+                         reply_markup=keyboard)
+        bot.register_next_step_handler(message, decision_new)
+    elif message.text == 'Plot':
+        bot.send_message(message.chat.id, 'Here is your data:')
+        data = get_dataframe(message.chat.id)
+        bot.send_message(message.from_user.id, data.to_string(index=False))
+        bot.send_message(message.chat.id, "Please enter two columns that you would like to plot")
+        bot.register_next_step_handler(message, trans_to_plot)
 
 
 def decision_new(message):
@@ -287,8 +303,8 @@ def getset_command(message):
 
 # function that asks for axis names, and sends plot to user
 def bot_plot(message, x, y,
-             x_label,
-             y_label,
+             x_label=None,
+             y_label=None,
              init=True,
              grid=None,
              x_tick=None,
@@ -298,7 +314,7 @@ def bot_plot(message, x, y,
              mnk=None,
              ):
     data = read_user_data(message.chat.id)
-
+    print(cdots)
     if init:
         kb = telebot.types.ReplyKeyboardMarkup(True, True)
         kb.row('Yes', 'No')
@@ -373,7 +389,7 @@ def doc_read(message, var1, var2):
         url = 'https://api.telegram.org/file/bot{}/{}'.format(token, data.file_path)
         x, y = excel_x_y(url, var1, var2)
         bot.send_message(message.chat.id,
-                         'Your values are: \n{}: {}  \n{}: {}'. format(var1, str(x), var2, str(y)))
+                         'Your values are: \n{}: {}  \n{}: {}'.format(var1, str(x), var2, str(y)))
         bot_plot(message, x, y, var1, var2, init=True)
     except AttributeError:
         bot.send_message(message.chat.id, 'Sorry, something is wrong with the format. Please send the file again')

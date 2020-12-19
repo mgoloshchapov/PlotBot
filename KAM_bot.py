@@ -44,11 +44,20 @@ def data_check(message):
 
 # function for reading excel files
 @bot.message_handler(commands=['doc'])
-def doc_command(message):
-    bot.send_message(message.chat.id,
-                     "Please send an excel file with two columns named 'x' and 'y' "
-                     "containing the data you want to plot.")
-    bot.register_next_step_handler(message, doc_read)
+def doc_command(message, init=True, var1=None, var2=None):
+    if init:
+        bot.send_message(message.chat.id,
+                         "Before sending an excel file please tell "
+                         "the names of two columns that you want to plot(separate them by spaces):")
+        bot.register_next_step_handler(message, doc_command, False)
+    elif isinstance(var1, type(None)):
+        vars = message.text.split(' ')
+        var1 = vars[0]
+        var2 = vars[1]
+        bot.send_message(message.chat.id, 'Please send the excel file:')
+        bot.register_next_step_handler(message, doc_command, False, var1, var2)
+    else:
+        doc_read(message, var1, var2)
 
 
 # function for saving user's data
@@ -358,17 +367,17 @@ def bot_plot(message, x, y,
 
 
 # function that reads excel file
-def doc_read(message):
+def doc_read(message, var1, var2):
     try:
         data = bot.get_file(message.document.file_id)
         url = 'https://api.telegram.org/file/bot{}/{}'.format(token, data.file_path)
-        x, y = excel_x_y(url)
+        x, y = excel_x_y(url, var1, var2)
         bot.send_message(message.chat.id,
-                         'Your values are: \nx: ' + str(x) + '\ny: ' + str(y))
-        bot_plot(message, x, y, init=True)
+                         'Your values are: \n{}: {}  \n{}: {}'. format(var1, str(x), var2, str(y)))
+        bot_plot(message, x, y, var1, var2, init=True)
     except AttributeError:
         bot.send_message(message.chat.id, 'Sorry, something is wrong with the format. Please send the file again')
-        bot.register_next_step_handler(message, doc_read)
+        bot.register_next_step_handler(message, doc_read, var1, var2)
 
 
 # function for saving dataframes

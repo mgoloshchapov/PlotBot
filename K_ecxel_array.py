@@ -2,9 +2,9 @@ import pandas as pd
 import numpy as np
 
 
-def excel_x_y(url):
+def excel_x_y(url, var1, var2):
     data = pd.read_excel(url)
-    x, y = np.array(data['x']), np.array(data['y'])
+    x, y = np.array(data[var1]), np.array(data[var2])
     return x, y
 
 

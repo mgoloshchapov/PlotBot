@@ -288,7 +288,6 @@ def bot_plot(message, x, y,
              cdots=None,
              mnk=None,
              ):
-
     data = read_user_data(message.chat.id)
 
     if init:
@@ -335,16 +334,19 @@ def bot_plot(message, x, y,
         kb = telebot.types.ReplyKeyboardMarkup(True, True)
         kb.row('Yes', 'No')
         bot.send_message(message.chat.id, 'Would you like to plot the best fit line(least squares)?', reply_markup=kb)
-        bot.register_next_step_handler(message, bot_plot, x, y, x_label, y_label, False, grid, x_tick, y_tick, title, cdots)
+        bot.register_next_step_handler(message, bot_plot, x, y, x_label, y_label, False, grid, x_tick, y_tick, title,
+                                       cdots)
     elif isinstance(mnk, type(None)):
         mnk = message.text.lower()
         plot(x, y, grid, x_tick, y_tick, title, cdots, mnk, x_label, y_label, **data['visual'])
         photo = open('plot.png', 'rb')
         bot.send_photo(message.chat.id, photo)
+        increment_plot_count(message.chat.id)
         kb = telebot.types.ReplyKeyboardMarkup(True, True)
         kb.row('Yes', 'No')
         bot.send_message(message.chat.id, 'Would you like to plot something else?', reply_markup=kb)
-        bot.register_next_step_handler(message, bot_plot, x, y, x_label, y_label, False, grid, x_tick, y_tick, title, cdots, mnk)
+        bot.register_next_step_handler(message, bot_plot, x, y, x_label, y_label, False, grid, x_tick, y_tick, title,
+                                       cdots, mnk)
     else:
         if message.text == 'Yes':
             bot.send_message(message.chat.id,
@@ -353,7 +355,6 @@ def bot_plot(message, x, y,
         else:
             bot.send_message(message.chat.id,
                              "It's nice to work with you human! If you want to plot something again, just press /start")
-
 
 
 # function that reads excel file
@@ -391,6 +392,64 @@ def doc_save(message, dataframe=None):
         else:
             bot.send_message(message.chat.id,
                              "Sorry, I did not get that...\nYour data has been discarded.")
+
+
+# the mighty and allpowerful function command
+@bot.message_handler(commands=['function'])
+def function_command(message):
+    bot.send_message(message.chat.id,
+                     "Type an expression. Make sure the variables are single-letter.")
+    bot.register_next_step_handler(message, enter_function)
+
+
+# the first child of the function
+def enter_function(message):
+    expr = Equation(message.text)
+    variables = expr.symbols_sting
+    enter_variables(message, variables, expr)
+
+
+# the second child of the function
+def enter_variables(message, variables, expr, result=None):
+    if result is None:
+        result = []
+    if len(variables) != 0:
+        bot.send_message(message.chat.id,
+                         "What data column would you like to use for variable " + variables[0] + "?")
+        bot.register_next_step_handler(message, enter_col_for_var, variables, result, expr)
+    else:
+        bot.send_message(message.chat.id,
+                         "Enter the name of an existing column or a new one.")
+        bot.register_next_step_handler(message, save_result_to_column(), result, expr)
+
+
+# the third child of the funciton
+def enter_col_for_var(message, variables, result, expr):
+    data = get_dataframe(message.chat.id)
+    val = message.text
+    try:
+        result.append(np.array(data[val]))
+        variables.pop(0)
+        enter_variables(message, variables, expr, result)
+    except KeyError:
+        bot.send_message(message.chat.id,
+                         "No such column found... Just try again from the very start!")
+
+
+# the final child of the function
+def save_result_to_column(message, result, expr, new=False):
+    data = get_dataframe(message.chat.id)
+    val = message.text
+    f = expr.lambdify()
+    try:
+        output = list(f(*result))
+        data[val] = output
+        update_dataframe(message.chat.id, data)
+        bot.send_message(message.chat.id,
+                         "Your expression has successfully been applied to colum " + val + "!")
+    except KeyError:
+        bot.send_message(message.chat.id,
+                         "No such column found... Just try again from the very very start!")
 
 
 bot.polling(none_stop=True)

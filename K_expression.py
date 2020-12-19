@@ -30,8 +30,8 @@ def enter_variables(message, variables, expr, result=None):
         bot.register_next_step_handler(message, enter_col_for_var, variables, result, expr)
     else:
         bot.send_message(message.chat.id,
-                         "What column would you like to save the result to?")
-        bot.register_next_step_handler(message, save_result_to_column, result, expr)
+                         "Enter the name of an existing column or a new one.")
+        bot.register_next_step_handler(message, save_result_to_column(), result, expr)
 
 
 def enter_col_for_var(message, variables, result, expr):
@@ -46,7 +46,7 @@ def enter_col_for_var(message, variables, result, expr):
                          "No such column found... Just try again from the very start!")
 
 
-def save_result_to_column(message, result, expr):
+def save_result_to_column(message, result, expr, new=False):
     data = get_dataframe(message.chat.id)
     val = message.text
     f = expr.lambdify()

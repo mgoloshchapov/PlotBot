@@ -183,53 +183,6 @@ def data_show(message):
     data = get_dataframe(message.chat.id)
     bot.send_message(message.from_user.id, str(data))
 
-
-
-
-
-
-
-
-
-
-
-
-
-# def reg_command(message, x=None, y=None):
-#     if message.text == '/reg':
-#         bot.send_message(message.chat.id,
-#                          "Enter x values separated by spaces:")
-#         bot.register_next_step_handler(message, reg_command)
-#     else:
-#         if isinstance(x, type(None)):
-#             try:
-#                 txt = message.text.replace(',', '.')
-#                 x = list(map(float, txt.split(' ')))
-#                 bot.send_message(message.chat.id,
-#                                  "Enter y values separated by spaces:")
-#                 bot.register_next_step_handler(message, reg_command, x)
-#             except ValueError:
-#                 bot.send_message(message.chat.id, "It seems like your data is incorrect. Please enter x once again.")
-#                 bot.register_next_step_handler(message, reg_command)
-#         elif isinstance(y, type(None)):
-#             try:
-#                 txt = message.text.replace(',', '.')
-#                 y = list(map(float, txt.split(' ')))
-#                 if len(x) != len(y):
-#                     bot.send_message(message.chat.id, 'Some of the data is missing. Do not play with me, human!')
-#                     bot.send_message(message.chat.id,
-#                                      "Give it a try. Enter the x values separated by spaces one more time:")
-#                     bot.register_next_step_handler(message, reg_command, None, None)
-#                 else:
-#                     bot.send_message(message.chat.id,
-#                                      'Your values are: \nx: {} \ny: {}'.format(str(x), str(y)))
-#                     x = np.array(x)
-#                     y = np.array(y)
-#                     bot_plot(message, x, y, init=True)
-#             except ValueError:
-#                 bot.send_message(message.chat.id, "It seems like your data is incorrect. Please enter y once again.")
-#                 bot.register_next_step_handler(message, reg_command, x)
-
 # settings command
 @bot.message_handler(commands=['set'])
 def set_command(message, setting=None):

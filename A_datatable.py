@@ -10,7 +10,7 @@ def editdata_command(message):
     keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
     keyboard.row('New', 'Edit')
     bot.send_message(message.chat.id,
-                     "Shall I create a new datatable, or edit yours?",
+                     "Shall I create a new data table, or edit yours?",
                      reply_markup=keyboard)
     bot.register_next_step_handler(message, decision_new)
 

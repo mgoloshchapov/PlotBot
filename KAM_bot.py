@@ -58,40 +58,130 @@ def docs_command(message):
     bot.register_next_step_handler(message, doc_save)
 
 
+
+
+
+
+
 # function for reading manual input
 @bot.message_handler(commands=['reg'])
-def reg_command(message, x=None, y=None):
-    if message.text == '/reg':
+def editdata_command(message):
+    keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
+    keyboard.row('New', 'Edit')
+    bot.send_message(message.chat.id,
+                     "Shall I create a new data table, or edit yours?",
+                     reply_markup=keyboard)
+    bot.register_next_step_handler(message, decision_new)
+
+
+def decision_new(message):
+    if message.text == 'New':
+        bot.send_message(message.from_user.id,
+                         'Come up with a name for your first variable.')
+        bot.register_next_step_handler(message, column_naming, True)
+    elif message.text == 'Edit':
+        keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
+        keyboard.row('Add', 'Delete')
+        bot.send_message(message.from_user.id,
+                         'Would you like to add or delete a new column?',
+                         reply_markup=keyboard)
+        bot.register_next_step_handler(message, decision_add_del)
+
+
+def decision_add_del(message):
+    if message.text == 'Add':
+        bot.send_message(message.from_user.id,
+                         'Come up with a name for your variable.')
+        bot.register_next_step_handler(message, column_naming)
+    elif message.text == 'Delete':
+        bot.send_message(message.from_user.id,
+                         'Which variable would you like to delete?')
+        bot.register_next_step_handler(message, column_delete)
+
+
+def column_delete(message):
+    val = message.text
+    data = get_dataframe(message.chat.id)
+    try:
+        del data[val]
         bot.send_message(message.chat.id,
-                         "Enter x values separated by spaces:")
-        bot.register_next_step_handler(message, reg_command)
+                         'I have successfully deleted that column.')
+        update_dataframe(message.chat.id, data)
+    except KeyError:
+        bot.send_message(message.chat.id,
+                         "I did not manage to delete that column. But you don't have to worry, "
+                         "there never was such a column...")
+    keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
+    keyboard.row('Yes', 'No')
+    bot.send_message(message.chat.id,
+                     "Should wee keep going?",
+                     reply_markup=keyboard)
+    bot.register_next_step_handler(message, decision_return)
+
+
+def decision_return(message):
+    if message.text == 'Yes':
+        keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
+        keyboard.row('Add', 'Delete')
+        bot.send_message(message.from_user.id,
+                         'Would you like to add or delete a new column?',
+                         reply_markup=keyboard)
+        bot.register_next_step_handler(message, decision_add_del)
     else:
-        if isinstance(x, type(None)):
-            try:
-                txt = message.text.replace(',', '.')
-                x = np.array(list(map(float, txt.split(' '))))
-                bot.send_message(message.chat.id,
-                                 "Enter y values separated by spaces:")
-                bot.register_next_step_handler(message, reg_command, x)
-            except ValueError:
-                bot.send_message(message.chat.id, "It seems like your data is incorrect. Please enter x once again.")
-                bot.register_next_step_handler(message, reg_command)
-        elif isinstance(y, type(None)):
-            try:
-                txt = message.text.replace(',', '.')
-                y = np.array(list(map(float, txt.split(' '))))
-                if len(x) != len(y):
-                    bot.send_message(message.chat.id, 'Some of the data is missing. Do not play with me, human!')
-                    bot.send_message(message.chat.id,
-                                     "Give it a try. Enter the x values separated by spaces one more time:")
-                    bot.register_next_step_handler(message, reg_command, None, None)
-                else:
-                    bot.send_message(message.chat.id,
-                                     'Your values are: \nx: ' + str(x) + '\ny: ' + str(y))
-                    bot_plot(message, x, y, init=True)
-            except ValueError:
-                bot.send_message(message.chat.id, "It seems like your data is incorrect. Please enter y once again.")
-                bot.register_next_step_handler(message, reg_command, x)
+        bot.send_message(message.chat.id, 'Here is your data:')
+        data = get_dataframe(message.chat.id)
+        bot.send_message(message.from_user.id, data.to_string(index=False))
+        bot.send_message(message.chat.id, "Please enter two columns that you would like to plot")
+        bot.register_next_step_handler(message, trans_to_plot)
+
+
+def trans_to_plot(message):
+    col = message.text.split()
+    data = get_dataframe(message.chat.id)
+    names = list(data)
+    if len(col) != 2 or col[0] not in names or col[1] not in names:
+        bot.send_message(message.chat.id, "Oops... Please enter two correct columns:")
+        bot.register_next_step_handler(message, trans_to_plot)
+    else:
+        x = list(data[col[0]])
+        y = list(data[col[1]])
+        bot_plot(message, x, y, col[0], col[1])
+
+
+def column_naming(message, init=False):
+    column_title = str(message.text)
+    bot.send_message(message.from_user.id,
+                     'Now enter the values for that column.')
+    bot.register_next_step_handler(message, table_content_change, column_title, init)
+
+
+def table_content_change(message, column_title, init=False):
+    val = message.text
+    if init:
+        data = reset_user_dataframe(message.chat.id)
+    else:
+        data = get_dataframe(message.chat.id)
+    new_column = list(map(float, val.split()))
+    if len(new_column) != len(data) and not init:
+        bot.send_message(message.chat.id,
+                         "Unfortunately, a column must have the same length as your table.")
+    else:
+        data[column_title] = new_column
+        update_dataframe(message.chat.id, data)
+        bot.send_message(message.chat.id,
+                         "Successfully added a new column!")
+    keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
+    keyboard.row('Yes', 'No')
+    bot.send_message(message.chat.id,
+                     "Should wee keep going?",
+                     reply_markup=keyboard)
+    bot.register_next_step_handler(message, decision_return)
+
+
+@bot.message_handler(commands=["showdata"])
+def data_show(message):
+    data = get_dataframe(message.chat.id)
+    bot.send_message(message.from_user.id, str(data))
 
 # settings command
 @bot.message_handler(commands=['set'])
@@ -184,15 +274,17 @@ def getset_command(message):
 
 # function that asks for axis names, and sends plot to user
 def bot_plot(message, x, y,
+             x_label,
+             y_label,
+             init=True,
              grid=None,
-             x_label=None,
              x_tick=None,
-             y_label=None,
              y_tick=None,
              title=None,
              cdots=None,
              mnk=None,
-             init=False):
+             ):
+
     data = read_user_data(message.chat.id)
 
     if init:
@@ -200,70 +292,60 @@ def bot_plot(message, x, y,
         kb.row('Yes', 'No')
         bot.send_message(message.chat.id,
                          'Do you need grid?', reply_markup=kb)
-        bot.register_next_step_handler(message, bot_plot, x, y)
+        bot.register_next_step_handler(message, bot_plot, x, y, x_label, y_label, False)
     elif isinstance(grid, type(None)):
         grid = message.text.lower()
         bot.send_message(message.chat.id,
-                         "Come up with a name for the x axis:")
-        bot.register_next_step_handler(message, bot_plot, x, y, grid)
-    elif isinstance(x_label, type(None)):
-        x_label = message.text
-        bot.send_message(message.chat.id,
                          "Come up with a tick for the x axis")
-        bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label)
+        bot.register_next_step_handler(message, bot_plot, x, y, x_label, y_label, False, grid)
     elif isinstance(x_tick, type(None)):
         try:
             x_tick = message.text
             x_tick = x_tick.replace(',', '.')
             x_tick = float(x_tick)
-            bot.send_message(message.chat.id, "Come up with a name for the y axis:")
-            bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label, x_tick)
+            bot.send_message(message.chat.id, "Come up with a tick for the y axis:")
+            bot.register_next_step_handler(message, bot_plot, x, y, x_label, y_label, False, grid, x_tick)
         except ValueError:
             bot.send_message(message.chat.id, "Please be serious. I'm kind of bored by that old trick")
             bot.send_message(message.chat.id, "Please enter x tick once again.")
-            bot.register_next_step_handler(message, bot_plot, x, y, grid,  x_label)
-    elif isinstance(y_label, type(None)):
-        y_label = message.text
-        bot.send_message(message.chat.id,
-                         "Come up with a tick for the y axis")
-        bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label, x_tick, y_label)
+            bot.register_next_step_handler(message, bot_plot, x, y, x_label, y_label, False, grid)
     elif isinstance(y_tick, type(None)):
         try:
             y_tick = message.text
             y_tick = y_tick.replace(',', '.')
             y_tick = float(y_tick)
             bot.send_message(message.chat.id, "Come up with a plot title")
-            bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label, x_tick, y_label, y_tick)
+            bot.register_next_step_handler(message, bot_plot, x, y, x_label, y_label, False, grid, x_tick, y_tick)
         except ValueError:
             bot.send_message(message.chat.id, "Is that some human inside joke?")
             bot.send_message(message.chat.id, "Please enter y tick once again.")
-            bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label, x_tick, y_label)
+            bot.register_next_step_handler(message, bot_plot, x, y, x_label, y_label, False, grid, x_tick)
     elif isinstance(title, type(None)):
         kb = telebot.types.ReplyKeyboardMarkup(True, True)
         kb.row('Yes', 'No')
         title = message.text
         bot.send_message(message.chat.id, 'Would you like to connect the dots?', reply_markup=kb)
-        bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label, x_tick, y_label, y_tick, title)
+        bot.register_next_step_handler(message, bot_plot, x, y, x_label, y_label, False, grid, x_tick, y_tick, title)
     elif isinstance(cdots, type(None)):
         cdots = message.text.lower()
         kb = telebot.types.ReplyKeyboardMarkup(True, True)
         kb.row('Yes', 'No')
         bot.send_message(message.chat.id, 'Would you like to plot the best fit line(least squares)?', reply_markup=kb)
-        bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label, x_tick, y_label, y_tick, title, cdots)
+        bot.register_next_step_handler(message, bot_plot, x, y, x_label, y_label, False, grid, x_tick, y_tick, title, cdots)
     elif isinstance(mnk, type(None)):
         mnk = message.text.lower()
-        plot(x, y, grid, x_label, x_tick, y_label, y_tick, title, cdots, mnk, **data['visual'])
+        plot(x, y, grid, x_tick, y_tick, title, cdots, mnk, x_label, y_label, **data['visual'])
         photo = open('plot.png', 'rb')
         bot.send_photo(message.chat.id, photo)
         kb = telebot.types.ReplyKeyboardMarkup(True, True)
         kb.row('Yes', 'No')
         bot.send_message(message.chat.id, 'Would you like to plot something else?', reply_markup=kb)
-        bot.register_next_step_handler(message, bot_plot, x, y, grid, x_label, x_tick, y_label, y_tick, title, cdots, mnk)
+        bot.register_next_step_handler(message, bot_plot, x, y, x_label, y_label, False, grid, x_tick, y_tick, title, cdots, mnk)
     else:
         if message.text == 'Yes':
             bot.send_message(message.chat.id,
                              "Enter x values separated by spaces:")
-            bot.register_next_step_handler(message, reg_command)
+            bot.register_next_step_handler(message, editdata_command)
         else:
             bot.send_message(message.chat.id,
                              "It's nice to work with you human! If you want to plot something again, just press /start")
@@ -272,12 +354,16 @@ def bot_plot(message, x, y,
 
 # function that reads excel file
 def doc_read(message):
-    data = bot.get_file(message.document.file_id)
-    url = 'https://api.telegram.org/file/bot{}/{}'.format(token, data.file_path)
-    x, y = excel_x_y(url)
-    bot.send_message(message.chat.id,
-                     'Your values are: \nx: ' + str(x) + '\ny: ' + str(y))
-    bot_plot(message, x, y, init=True)
+    try:
+        data = bot.get_file(message.document.file_id)
+        url = 'https://api.telegram.org/file/bot{}/{}'.format(token, data.file_path)
+        x, y = excel_x_y(url)
+        bot.send_message(message.chat.id,
+                         'Your values are: \nx: ' + str(x) + '\ny: ' + str(y))
+        bot_plot(message, x, y, init=True)
+    except AttributeError:
+        bot.send_message(message.chat.id, 'Sorry, something is wrong with the format. Please send the file again')
+        bot.register_next_step_handler(message, doc_read)
 
 
 # function for saving dataframes

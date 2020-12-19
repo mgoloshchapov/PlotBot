@@ -41,6 +41,7 @@ def data_check(message):
     bot.send_message(message.chat.id,
                      "Your data is:\n" + str(dataframe))
 
+
 # function for reading excel files
 @bot.message_handler(commands=['doc'])
 def doc_command(message):
@@ -56,11 +57,6 @@ def docs_command(message):
     bot.send_message(message.chat.id,
                      "Please send an excel file with your data.")
     bot.register_next_step_handler(message, doc_save)
-
-
-
-
-
 
 
 # function for reading manual input
@@ -157,31 +153,39 @@ def column_naming(message, init=False):
 
 def table_content_change(message, column_title, init=False):
     val = message.text
-    if init:
-        data = reset_user_dataframe(message.chat.id)
-    else:
-        data = get_dataframe(message.chat.id)
-    new_column = list(map(float, val.split()))
-    if len(new_column) != len(data) and not init:
+    val = val.replace(',', '.')
+    try:
+        if init:
+            data = reset_user_dataframe(message.chat.id)
+        else:
+            data = get_dataframe(message.chat.id)
+        new_column = list(map(float, val.split()))
+        if len(new_column) != len(data) and not init:
+            bot.send_message(message.chat.id,
+                             "Unfortunately, a column must have the same length as your table.")
+        else:
+            data[column_title] = new_column
+            update_dataframe(message.chat.id, data)
+            bot.send_message(message.chat.id,
+                             "Successfully added a new column!")
+        keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
+        keyboard.row('Yes', 'No')
         bot.send_message(message.chat.id,
-                         "Unfortunately, a column must have the same length as your table.")
-    else:
-        data[column_title] = new_column
-        update_dataframe(message.chat.id, data)
-        bot.send_message(message.chat.id,
-                         "Successfully added a new column!")
-    keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
-    keyboard.row('Yes', 'No')
-    bot.send_message(message.chat.id,
-                     "Should wee keep going?",
-                     reply_markup=keyboard)
-    bot.register_next_step_handler(message, decision_return)
+                         "Should wee keep going?",
+                         reply_markup=keyboard)
+        bot.register_next_step_handler(message, decision_return)
+    except ValueError:
+        bot.send_message(message.chat.id, "I'm used to those old man tricks. "
+                                          "We are not close enough yet to plot strings.\n"
+                                          " Please enter valid data:")
+        bot.register_next_step_handler(message, table_content_change, column_title, init)
 
 
 @bot.message_handler(commands=["showdata"])
 def data_show(message):
     data = get_dataframe(message.chat.id)
     bot.send_message(message.from_user.id, str(data))
+
 
 # settings command
 @bot.message_handler(commands=['set'])
